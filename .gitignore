@@ -1,0 +1,18 @@
+# PyInstaller (dist/ is versioned so others can download exes without building)
+/build/
+*.spec
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+.venv/
+
+# Editor / OS
+Thumbs.db
+Desktop.ini
+
+# Local fixtures and PDF samples (not versioned)
+test/

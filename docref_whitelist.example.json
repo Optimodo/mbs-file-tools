@@ -1,0 +1,47 @@
+{
+  "description": "Copy to docref_whitelist.json next to the exe. Each block may use: patterns (fnmatch, * allows all), min_length, max_length (character count of that segment, inclusive). Omit min_length/max_length to skip length checks for that block.",
+  "blocks": [
+    {
+      "name": "Project Code",
+      "patterns": ["*", "R*", "WCR"],
+      "min_length": 2,
+      "max_length": 8
+    },
+    {
+      "name": "Company Code",
+      "patterns": ["MBS"],
+      "min_length": 2,
+      "max_length": 3
+    },
+    {
+      "name": "Block",
+      "patterns": ["*", "B?", "CZ", "AA"],
+      "min_length": 2,
+      "max_length": 2
+    },
+    {
+      "name": "Level",
+      "patterns": ["*", "ZZ", "??"],
+      "min_length": 2,
+      "max_length": 2
+    },
+    {
+      "name": "Document Type",
+      "patterns": ["*", "DR", "SM"],
+      "min_length": 2,
+      "max_length": 2
+    },
+    {
+      "name": "Specialisation",
+      "patterns": ["*", "W", "X", "M"],
+      "min_length": 1,
+      "max_length": 2
+    },
+    {
+      "name": "Document Number",
+      "patterns": ["*", "*-*"],
+      "min_length": 4,
+      "max_length": 8
+    }
+  ]
+}
