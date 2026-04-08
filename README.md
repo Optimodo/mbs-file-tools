@@ -65,7 +65,7 @@ python docref_rename_list.py
 - **All exes:** `build_all.bat`
 - **Individual:** `build_inplace.bat`, `build_list_files.bat`, `build_docref.bat`
 
-Artifacts go to **`dist/`** (ignored by git). Generated **`*.spec`** files are removed by the batch scripts after build.
+Built executables land in **`dist/`** (also committed in this repo so you can download them without building). The **`build/`** folder and **`*.spec`** files are not versioned; batch scripts clean **`build/`** and remove **`*.spec`** after a successful build.
 
 ---
 
