@@ -1,6 +1,7 @@
 """
 Rename drawing files to the 7-block document reference only (plus extension)
-and write report.txt (overwritten each run) with parallel columns for spreadsheets.
+and write report.txt (or report-1.txt, report-2.txt, … if the base name exists)
+with parallel columns for spreadsheets.
 
 Uses win_longpath for deep OneDrive/UNC paths (\\?\ prefix + MoveFileW fallback on Windows).
 """
@@ -19,6 +20,7 @@ from docref_core import (
 )
 from win_longpath import (
     list_directory,
+    next_available_report_path,
     open_text_write,
     path_exists,
     path_isfile,
@@ -79,7 +81,7 @@ def run(target_folder: str | None = None) -> str | None:
         target_folder = os.path.abspath(target_folder)
 
     script_basename = get_script_basename()
-    report_path = os.path.join(target_folder, REPORT_NAME)
+    report_path = next_available_report_path(target_folder, REPORT_NAME)
 
     try:
         all_names = [
@@ -252,7 +254,7 @@ def run(target_folder: str | None = None) -> str | None:
     with open_text_write(report_path) as rf:
         rf.write("\n".join(lines))
 
-    print(f"\nReport saved: {REPORT_NAME}")
+    print(f"\nReport saved: {os.path.basename(report_path)}")
     return report_path
 
 

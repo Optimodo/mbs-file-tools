@@ -9,6 +9,7 @@ Also tries MoveFileW as a fallback when os.replace fails (Windows only).
 from __future__ import annotations
 
 import os
+import re
 import sys
 
 _WIN32_MAX_COMPONENT = 255
@@ -85,6 +86,36 @@ else:
 
     def open_text_write(path: str):
         return open(os.path.abspath(path), "w", encoding="utf-8", newline="\n")
+
+
+def next_available_report_path(base_dir: str, filename: str) -> str:
+    """
+    First path under base_dir that does not exist: name.ext, then name-1.ext,
+    name-2.ext, ... (suffix before the extension).
+    """
+    base_dir = os.path.abspath(base_dir)
+    stem, ext = os.path.splitext(filename)
+    primary = os.path.join(base_dir, f"{stem}{ext}")
+    if not path_exists(primary):
+        return primary
+    n = 1
+    while True:
+        candidate = os.path.join(base_dir, f"{stem}-{n}{ext}")
+        if not path_exists(candidate):
+            return candidate
+        n += 1
+
+
+def is_versioned_report_name(entry_name: str, template_filename: str) -> bool:
+    """
+    True if entry_name is the template basename or the same stem with -digits
+    before the extension (e.g. template ``report.txt`` matches ``report-2.txt``).
+    """
+    stem, ext = os.path.splitext(template_filename.lower())
+    n = entry_name.lower()
+    if n == f"{stem}{ext}":
+        return True
+    return re.fullmatch(re.escape(stem) + r"-\d+" + re.escape(ext), n) is not None
 
 
 def path_length_report_lines(target_folder: str, filenames: list[str]) -> list[str]:

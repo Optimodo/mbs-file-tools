@@ -9,7 +9,14 @@ from docref_core import (
     parse_name_without_ext,
     strip_windows_duplicate_suffix,
 )
-from win_longpath import list_directory, open_text_write, path_exists, path_isfile, rename_file
+from win_longpath import (
+    list_directory,
+    next_available_report_path,
+    open_text_write,
+    path_exists,
+    path_isfile,
+    rename_file,
+)
 
 FNAME_REPORT = "FNameReport.txt"
 
@@ -122,7 +129,7 @@ def rename_files_inplace(target_folder=None):
     else:
         target_folder = os.path.abspath(target_folder)
     
-    log_file = os.path.join(target_folder, FNAME_REPORT)
+    log_file = next_available_report_path(target_folder, FNAME_REPORT)
     logger = Logger(log_file)
 
     # Log header
@@ -292,7 +299,7 @@ if __name__ == "__main__":
     print("FName - In-place rename")
     print("=" * 60)
     print()
-    print("Renames files in this folder; see FNameReport.txt for the log.")
+    print("Renames files in this folder; see FNameReport.txt (or FNameReport-1.txt, …) for the log.")
     print()
     
     rename_files_inplace()

@@ -8,7 +8,13 @@ from docref_core import (
     parse_name_without_ext,
     pdf_dwg_notes,
 )
-from win_longpath import list_directory, open_text_write, path_isfile
+from win_longpath import (
+    is_versioned_report_name,
+    list_directory,
+    next_available_report_path,
+    open_text_write,
+    path_isfile,
+)
 
 OUTPUT_NAME = "filelist.txt"
 
@@ -28,7 +34,7 @@ def should_skip_file(name: str, script_basename: str) -> bool:
     sb = script_basename.lower()
     if n == sb:
         return True
-    if n == OUTPUT_NAME.lower():
+    if is_versioned_report_name(name, OUTPUT_NAME):
         return True
     if n == "list_files.bat":
         return True
@@ -38,9 +44,9 @@ def should_skip_file(name: str, script_basename: str) -> bool:
         return True
     if n == "win_longpath.py":
         return True
-    if n == "report.txt":
+    if is_versioned_report_name(name, "report.txt"):
         return True
-    if n == "fnamereport.txt":
+    if is_versioned_report_name(name, "FNameReport.txt"):
         return True
     if n.endswith(".exe") and n not in (sb,):
         return True
@@ -114,7 +120,7 @@ def write_filelist(base_path: str) -> str | None:
         notes.append("Whitelist / revision notes:")
         notes.extend(f"  - {x}" for x in wl_all)
 
-    out_path = os.path.join(base_path, OUTPUT_NAME)
+    out_path = next_available_report_path(base_path, OUTPUT_NAME)
     with open_text_write(out_path) as f:
         f.write("=== Unique filename stems (no extension), first-seen folder order ===\n")
         for s in ordered_stems:
@@ -148,7 +154,7 @@ def main():
     base_path = get_base_path()
     path = write_filelist(base_path)
     if path:
-        print(f"Wrote {OUTPUT_NAME}")
+        print(f"Wrote {os.path.basename(path)}")
         print(path)
     else:
         print("No files found to list (excluding this tool and report outputs).")
