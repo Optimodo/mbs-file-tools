@@ -6,10 +6,12 @@ Parse workflow (after normalizing underscores to dashes):
 0. Strip Windows Explorer duplicate suffixes: trailing " - Copy", " - Copy (n)", " (n)", or "(n)".
 1. Strip a revision token at the very end (after the title), e.g. ... LAYOUT - P01 / -P01 / P01.
 2. Match the 7-block document reference prefix (6 segments + document number).
-3. Parse the tail after the doc ref: optional revision (P01, C01, etc.) with flexible
+3. Drop a spurious short numeric segment between specialisation and document number
+   (e.g. ...-W-2-55026 -> ...-W-55026 after normalising underscores).
+4. Parse the tail after the doc ref: optional revision (P01, C01, etc.) with flexible
    spaces/dashes, then the document title (canonical ' - ' or heuristic separators).
-4. Merge P/C and other revisions; note conflicts if both end and mid revisions differ.
-5. Validate the seven blocks and cross-check against the optional whitelist
+5. Merge P/C and other revisions; note conflicts if both end and mid revisions differ.
+6. Validate the seven blocks and cross-check against the optional whitelist
    (fnmatch patterns and/or min_length / max_length per block).
 """
 from __future__ import annotations
@@ -226,6 +228,27 @@ def _pop_trailing_revisions(parts: list[str]) -> tuple[list[str], str | None, li
     return parts, pc_rev, other
 
 
+def _strip_spurious_docnum_segment(parts: list[str]) -> tuple[list[str], str | None]:
+    """
+    Remove an extra numeric segment between the six prefix blocks and the document
+    number, e.g. ...-W-2-55026 -> ...-W-55026 when ``2`` is a spurious insert.
+
+    Heuristic: two trailing all-digit segments after six prefix blocks, where the
+    penultimate segment is shorter than the final (typical main document number).
+    Equal-length pairs are kept (e.g. 51457-51458 compound numbers).
+    """
+    if len(parts) < 8:
+        return parts, None
+    if not (parts[-1].isdigit() and parts[-2].isdigit()):
+        return parts, None
+    if len(parts) - 2 < 6:
+        return parts, None
+    short, main = parts[-2], parts[-1]
+    if len(short) < len(main):
+        return parts[:-2] + [main], short
+    return parts, None
+
+
 def _extract_body_and_docnum(parts: list[str]) -> tuple[list[str], str] | None:
     if not parts:
         return None
@@ -362,6 +385,13 @@ def parse_name_without_ext(
         revision_pc = revision_pc or pop_pc
     if pop_other:
         other_rev.extend(pop_other)
+
+    parts, spurious = _strip_spurious_docnum_segment(parts)
+    if spurious is not None:
+        warnings.append(
+            f"{name_without_ext!r}: removed spurious numeric segment {spurious!r} "
+            "between specialisation and document number."
+        )
 
     extracted = _extract_body_and_docnum(parts)
     if extracted is None:
