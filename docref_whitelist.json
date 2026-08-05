@@ -9,9 +9,9 @@
     },
     {
       "name": "Company Code",
-      "patterns": ["MBS"],
+      "patterns": ["MBS", "MAL20", "MAL*"],
       "min_length": 2,
-      "max_length": 3
+      "max_length": 5
     },
     {
       "name": "Block",
