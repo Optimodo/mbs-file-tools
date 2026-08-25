@@ -17,7 +17,7 @@ Filenames are interpreted as a **document reference** made of **seven segments**
 1. Normalize underscores to dashes.
 2. Strip Windows Explorer-style duplicate suffixes (e.g. ` - Copy`, ` (2)`).
 3. Detect and strip trailing revision tokens where applicable.
-4. Match the **core doc ref**: six non-numeric blocks plus a document number. The document number may be plain digits (`103402`) or a **compound** `digits-digits` value (`675-001`, `51457-51458`) — still one logical block, not an eighth section.
+4. Match the **core doc ref**: six non-numeric blocks plus a document number. The document number may be plain digits (`103402`), a **compound** `digits-digits` value (`675-001`, `51457-51458`), and/or a rare dotted sheet suffix (`51334.2`) kept as a literal `.N` (not rewritten to `-2`) — still one logical block.
 5. Strip export **date/originator** tails shaped like `YYMMDD` or `YYMMDD_ORIGINATOR` (e.g. `_260717_WMS`) so they are not mistaken for a compound document number.
 6. Optionally validate each block against **`docref_whitelist.json`** (fnmatch patterns and optional min/max length per block). Company codes such as `MBS` and `MAL20` are configured there.
 

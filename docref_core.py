@@ -7,8 +7,10 @@ Parse workflow (after normalizing underscores to dashes):
 1. Strip a revision token at the very end (after the title), e.g. ... LAYOUT - P01 / -P01 / P01.
 2. Match the 7-block document reference prefix (6 segments + primary document number).
 3. Optionally extend with a second numeric segment as a compound document number
-   (e.g. 675-001, 51457-51458), or strip a YYMMDD date (+ optional letter originator)
-   export suffix (e.g. ...-103402-260717-WMS -> ...-103402).
+   (e.g. 675-001, 51457-51458), keep a rare dotted sheet/variant suffix on the
+   document number (e.g. 51334.2 — literal dot, not converted to -2), or strip a
+   YYMMDD date (+ optional letter originator) export suffix
+   (e.g. ...-103402-260717-WMS -> ...-103402).
 4. Drop a spurious short numeric segment between specialisation and document number
    (e.g. ...-W-2-55026 -> ...-W-55026 after normalising underscores).
 5. Parse the tail after the doc ref: optional revision (P01, C01, etc.) with flexible
@@ -17,9 +19,9 @@ Parse workflow (after normalizing underscores to dashes):
 7. Validate the seven blocks and cross-check against the optional whitelist
    (fnmatch patterns and/or min_length / max_length per block).
 
-Document number is always one logical block: either plain digits or digits-digits
-(compound). Company codes may vary in length (e.g. MBS, MAL20); that is whitelist
-config, not a change to the seven-block model.
+Document number is always one logical block: plain digits, digits-digits (compound),
+and/or an optional .N sheet suffix (51334.2, 675-001.2). Company codes may vary in
+length (e.g. MBS, MAL20); that is whitelist config, not a change to the seven-block model.
 """
 from __future__ import annotations
 
@@ -264,6 +266,19 @@ def _strip_date_originator_from_tail(tail: str) -> tuple[str, str | None]:
     return rest, removed
 
 
+def _take_dotted_sheet_suffix(base: str, tail: str) -> tuple[str, str]:
+    """
+    Keep a rare dotted sheet/variant suffix on the document number.
+
+    Example: ...-51334.2 - TITLE -> doc number 51334.2 (literal dot, not -2).
+    Does not convert dash compounds like 51334-2; those stay dash-separated.
+    """
+    m = re.match(r"^(\.\d+)(.*)$", tail)
+    if not m:
+        return base, tail
+    return base + m.group(1), m.group(2)
+
+
 def _extend_compound_or_strip_date_suffix(
     base: str, tail: str
 ) -> tuple[str, str, list[str]]:
@@ -275,8 +290,8 @@ def _extend_compound_or_strip_date_suffix(
       the document number. Example: ...-103402-260717-WMS -> base unchanged.
     - Otherwise treat it as a compound document number (e.g. 675-001, 51457-51458).
 
-    After an optional compound take, also strip a following date/originator suffix
-    (e.g. ...-675-001-260717-WMS).
+    Then keep an optional dotted sheet suffix (.1, .2) on the document number, and
+    strip a following date/originator suffix (e.g. ...-675-001-260717-WMS).
     """
     notes: list[str] = []
     m = re.match(r"^-(\d+)(.*)$", tail)
@@ -295,6 +310,8 @@ def _extend_compound_or_strip_date_suffix(
         # Compound document number (second segment is not a calendar date).
         base = f"{base}-{second}"
         tail = rest
+
+    base, tail = _take_dotted_sheet_suffix(base, tail)
 
     tail, removed = _strip_date_originator_from_tail(tail)
     if removed is not None:
@@ -334,10 +351,16 @@ def _strip_spurious_docnum_segment(parts: list[str]) -> tuple[list[str], str | N
     return parts, None
 
 
+def _is_docnum_segment(s: str) -> bool:
+    """Plain digits, or digits with optional dotted sheet suffix (51334.2)."""
+    return bool(re.fullmatch(r"\d+(?:\.\d+)?", s))
+
+
 def _extract_body_and_docnum(parts: list[str]) -> tuple[list[str], str] | None:
     if not parts:
         return None
-    if parts[-1].isdigit():
+    if _is_docnum_segment(parts[-1]):
+        # Compound: first half is plain digits; second may include .N (675-001.2).
         if len(parts) >= 2 and parts[-2].isdigit():
             doc_num = f"{parts[-2]}-{parts[-1]}"
             body = parts[:-2]
@@ -439,7 +462,7 @@ def parse_name_without_ext(
     # rstrip only: leading space before " - TITLE" must be preserved for canonical detection.
     tail = m.group(2).rstrip()
 
-    # 3. Compound doc number (675-001) vs YYMMDD[_ORIGINATOR] export suffix
+    # 3. Compound doc number (675-001), dotted sheet (.2), vs YYMMDD[_ORIGINATOR] export suffix
     base, tail, date_notes = _extend_compound_or_strip_date_suffix(base, tail)
     for note in date_notes:
         warnings.append(f"{name_without_ext!r}: {note}.")
