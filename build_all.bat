@@ -7,7 +7,7 @@ echo.
 echo This will build:
 echo   1. FName.exe   (in-place rename)
 echo   2. FList.exe   (file list generator)
-echo   3. FNamePro.exe (doc-ref list + rename, report.txt)
+echo   3. FileRenamerPro.exe (doc-ref list + rename, report.txt)
 echo   4. FUndo.exe   (undo renames from reports)
 echo.
 echo ============================================
@@ -55,15 +55,16 @@ if errorlevel 1 (
 echo.
 
 echo ============================================
-echo [3/4] Building FNamePro.exe...
+echo [3/4] Building FileRenamerPro.exe...
 echo ============================================
-pyinstaller --onefile --console --name "FNamePro" docref_rename_list.py
+pyinstaller --onefile --console --name "FileRenamerPro" docref_rename_list.py
 if errorlevel 1 (
     echo.
-    echo ERROR: Build failed for FNamePro.exe!
+    echo ERROR: Build failed for FileRenamerPro.exe!
     pause
     exit /b 1
 )
+if exist "dist\FNamePro.exe" del "dist\FNamePro.exe"
 echo.
 
 echo ============================================
@@ -90,7 +91,7 @@ echo.
 echo Executables created in dist folder:
 echo   - FName.exe
 echo   - FList.exe
-echo   - FNamePro.exe
+echo   - FileRenamerPro.exe
 echo   - FUndo.exe
 echo.
 echo ============================================

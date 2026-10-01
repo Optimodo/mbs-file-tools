@@ -14,6 +14,7 @@ from win_longpath import (
     next_available_report_path,
     open_text_write,
     path_isfile,
+    resolve_cli_file_targets,
 )
 
 OUTPUT_NAME = "filelist.txt"
@@ -68,9 +69,22 @@ def list_folder_files(base_path: str, script_basename: str) -> list[str]:
     return out
 
 
-def write_filelist(base_path: str) -> str | None:
+def write_filelist(
+    base_path: str,
+    filenames: list[str] | None = None,
+    selection_notes: list[str] | None = None,
+) -> str | None:
     script_basename = get_script_basename()
-    all_files = list_folder_files(base_path, script_basename)
+    if filenames is not None:
+        all_files = []
+        for item in filenames:
+            if should_skip_file(item, script_basename):
+                continue
+            path = os.path.join(base_path, item)
+            if path_isfile(path):
+                all_files.append(item)
+    else:
+        all_files = list_folder_files(base_path, script_basename)
     if not all_files:
         return None
 
@@ -111,6 +125,11 @@ def write_filelist(base_path: str) -> str | None:
             wl_all.append(f"{stem}: removed non-P/C revision token(s) {pr.other_revisions!r}")
 
     notes: list[str] = []
+    if filenames is not None:
+        notes.append(f"Mode: selected files only ({len(all_files)} file(s) from drag-drop / CLI).")
+    else:
+        notes.append("Mode: all eligible files in folder.")
+    notes.extend(selection_notes or [])
     notes.extend(pdf_dwg_notes(all_files))
     if unparseable:
         notes.append("Could not derive 7-block document reference for these stems (see alternate list below):")
@@ -151,8 +170,14 @@ def write_filelist(base_path: str) -> str | None:
 
 
 def main():
-    base_path = get_base_path()
-    path = write_filelist(base_path)
+    folder, selected, sel_notes = resolve_cli_file_targets()
+    for note in sel_notes:
+        print(f"ℹ️  {note}")
+    if selected is not None:
+        print(f"Listing {len(selected)} selected file(s)…")
+        path = write_filelist(folder, filenames=selected, selection_notes=sel_notes)
+    else:
+        path = write_filelist(get_base_path(), selection_notes=sel_notes)
     if path:
         print(f"Wrote {os.path.basename(path)}")
         print(path)

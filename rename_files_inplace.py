@@ -16,6 +16,7 @@ from win_longpath import (
     path_exists,
     path_isfile,
     rename_file,
+    resolve_cli_file_targets,
 )
 
 FNAME_REPORT = "FNameReport.txt"
@@ -118,10 +119,12 @@ def clean_filename(filename, whitelist=None):
     legacy_name, legacy_notes = _legacy_clean_stem(name_without_ext, extension, filename)
     return legacy_name, info_notes + legacy_notes
 
-def rename_files_inplace(target_folder=None):
+def rename_files_inplace(target_folder=None, filenames=None, selection_notes=None):
     """
     Rename files in-place within the target folder.
     If target_folder is None, uses the folder where the script/exe is located.
+    If filenames is a list, only those basenames are processed (drag-drop mode);
+    otherwise every eligible file in the folder is processed.
     """
     # Get the base path (where the exe or script is located)
     if target_folder is None:
@@ -138,8 +141,17 @@ def rename_files_inplace(target_folder=None):
     logger.log("=" * 70)
     logger.log(f"Report Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     logger.log(f"Target Folder: {target_folder}")
+    if filenames is not None:
+        logger.log(f"Mode: selected files only ({len(filenames)} path(s) from drag-drop / CLI)")
+    else:
+        logger.log("Mode: all eligible files in folder")
     logger.log("=" * 70)
     logger.log("")
+
+    for note in selection_notes or []:
+        logger.log(f"ℹ️  {note}")
+    if selection_notes:
+        logger.log("")
     
     if not path_exists(target_folder):
         error_msg = f"ERROR: Target folder '{target_folder}' does not exist!"
@@ -147,15 +159,27 @@ def rename_files_inplace(target_folder=None):
         logger.save()
         return
 
-    all_files = [
-        f
-        for f in list_directory(target_folder)
-        if path_isfile(os.path.join(target_folder, f))
-    ]
-    
-    # Filter out the script/exe and log files
     script_name = os.path.basename(sys.executable if getattr(sys, 'frozen', False) else __file__)
-    files = [f for f in all_files if not f.endswith('.txt') and f != script_name and not f.endswith('.exe')]
+
+    if filenames is not None:
+        files = []
+        for f in filenames:
+            if f.endswith('.exe') or f == script_name:
+                logger.log(f"ℹ️  Skipped executable: {f}")
+                continue
+            full = os.path.join(target_folder, f)
+            if not path_isfile(full):
+                logger.log(f"ℹ️  Skipped missing file: {f}")
+                continue
+            files.append(f)
+    else:
+        all_files = [
+            f
+            for f in list_directory(target_folder)
+            if path_isfile(os.path.join(target_folder, f))
+        ]
+        # Filter out the script/exe and log files
+        files = [f for f in all_files if not f.endswith('.txt') and f != script_name and not f.endswith('.exe')]
     
     if not files:
         logger.log("No files found to process!")
@@ -299,10 +323,21 @@ if __name__ == "__main__":
     print("FName - In-place rename")
     print("=" * 60)
     print()
-    print("Renames files in this folder; see FNameReport.txt (or FNameReport-1.txt, …) for the log.")
+    print("Renames files in this folder, or only files dropped onto this exe.")
+    print("See FNameReport.txt (or FNameReport-1.txt, …) for the log.")
     print()
-    
-    rename_files_inplace()
+
+    folder, selected, sel_notes = resolve_cli_file_targets()
+    for note in sel_notes:
+        print(f"ℹ️  {note}")
+    if selected is not None:
+        print(f"Processing {len(selected)} selected file(s)…")
+        print()
+        rename_files_inplace(
+            target_folder=folder, filenames=selected, selection_notes=sel_notes
+        )
+    else:
+        rename_files_inplace(selection_notes=sel_notes)
     
     # Pause before closing (useful when running as exe)
     print()

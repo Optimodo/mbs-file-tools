@@ -1,5 +1,5 @@
 """
-Undo renames performed by FName (FNameReport*.txt) and FNamePro (report*.txt).
+Undo renames performed by FName (FNameReport*.txt) and FileRenamerPro (report*.txt).
 
 Scans the exe/script folder for all such reports (by name pattern), orders them
 oldest to newest by file modification time, parses ✓ RENAMED lines, composes
@@ -182,7 +182,7 @@ def undo_folder(folder: str, *, dry_run: bool) -> tuple[int, int, list[str]]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Undo FName / FNamePro renames using report files in this folder."
+        description="Undo FName / FileRenamerPro renames using report files in this folder."
     )
     parser.add_argument(
         "--folder",
@@ -197,7 +197,7 @@ def main() -> None:
     args = parser.parse_args()
     folder = os.path.abspath(args.folder or get_base_path())
 
-    print("Undo renames from FName / FNamePro reports")
+    print("Undo renames from FName / FileRenamerPro reports")
     print(f"Folder: {folder}")
     print()
 

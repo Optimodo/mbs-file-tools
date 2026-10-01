@@ -34,6 +34,9 @@ if sys.platform == "win32":
     def path_isfile(path: str) -> bool:
         return os.path.isfile(to_extended_path(os.path.abspath(path)))
 
+    def path_isdir(path: str) -> bool:
+        return os.path.isdir(to_extended_path(os.path.abspath(path)))
+
     def list_directory(folder: str) -> list[str]:
         return os.listdir(to_extended_path(os.path.abspath(folder)))
 
@@ -77,6 +80,9 @@ else:
 
     def path_isfile(path: str) -> bool:
         return os.path.isfile(os.path.abspath(path))
+
+    def path_isdir(path: str) -> bool:
+        return os.path.isdir(os.path.abspath(path))
 
     def list_directory(folder: str) -> list[str]:
         return os.listdir(os.path.abspath(folder))
@@ -156,3 +162,63 @@ def warn_if_component_too_long(filename: str) -> str | None:
             "rename may still fail."
         )
     return None
+
+
+def resolve_cli_file_targets(
+    args: list[str] | None = None,
+) -> tuple[str | None, list[str] | None, list[str]]:
+    """
+    Resolve drag-and-drop / CLI file paths.
+
+    When files are dropped onto an exe, Windows passes their full paths as argv.
+    Returns ``(None, None, notes)`` when there are no usable file args — caller
+    should process every document in the exe/script folder as usual.
+
+    When one or more existing files are given, returns
+    ``(folder, basenames, notes)``. All selected files must share one folder
+    (typical Explorer multi-select); files from other folders are skipped with
+    a note. Directory arguments are ignored (drop files, not folders).
+
+    Reports should be written beside ``folder`` (the dropped files' location).
+    """
+    if args is None:
+        args = sys.argv[1:]
+    notes: list[str] = []
+    if not args:
+        return None, None, notes
+
+    selected: list[tuple[str, str]] = []
+    for raw in args:
+        p = raw.strip().strip('"')
+        if not p:
+            continue
+        abs_p = os.path.abspath(p)
+        if path_isfile(abs_p):
+            selected.append((os.path.dirname(abs_p), os.path.basename(abs_p)))
+        elif path_isdir(abs_p):
+            notes.append(f"Ignored folder argument (drop files, not folders): {abs_p}")
+        else:
+            notes.append(f"Ignored missing path: {p}")
+
+    if not selected:
+        return None, None, notes
+
+    primary_folder = selected[0][0]
+    primary_key = os.path.normcase(primary_folder)
+    names: list[str] = []
+    seen: set[str] = set()
+    for folder, name in selected:
+        if os.path.normcase(folder) != primary_key:
+            notes.append(
+                f"Skipped file from another folder (processing only {primary_folder}): {name}"
+            )
+            continue
+        key = os.path.normcase(name)
+        if key in seen:
+            continue
+        seen.add(key)
+        names.append(name)
+
+    if not names:
+        return None, None, notes
+    return primary_folder, names, notes

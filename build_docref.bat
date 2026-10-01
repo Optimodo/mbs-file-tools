@@ -1,7 +1,7 @@
 @echo off
-REM Build FNamePro.exe (doc-ref rename + report.txt)
+REM Build FileRenamerPro.exe (doc-ref rename + report.txt)
 echo ============================================
-echo Building FNamePro.exe
+echo Building FileRenamerPro.exe
 echo ============================================
 echo.
 
@@ -12,21 +12,23 @@ if errorlevel 1 (
     echo.
 )
 
+if exist "build\FileRenamerPro" rmdir /s /q "build\FileRenamerPro"
+if exist "FileRenamerPro.spec" del "FileRenamerPro.spec"
 if exist "build\FNamePro" rmdir /s /q "build\FNamePro"
 if exist "FNamePro.spec" del "FNamePro.spec"
-echo.
 
-pyinstaller --onefile --console --name "FNamePro" docref_rename_list.py
+pyinstaller --onefile --console --name "FileRenamerPro" docref_rename_list.py
 if errorlevel 1 (
+    echo.
     echo ERROR: Build failed!
     pause
     exit /b 1
 )
 
-if exist "FNamePro.spec" del "FNamePro.spec"
+if exist "FileRenamerPro.spec" del "FileRenamerPro.spec"
+if exist "dist\FNamePro.exe" del "dist\FNamePro.exe"
 
 echo.
-echo Output: dist\FNamePro.exe
-echo Report: report.txt (overwritten each run)
-echo Optional: docref_whitelist.json next to exe
+echo Output: dist\FileRenamerPro.exe
+echo ============================================
 pause

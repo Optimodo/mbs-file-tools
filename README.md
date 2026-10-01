@@ -8,7 +8,9 @@ Windows utilities for **normalizing engineering drawing filenames** to a **seven
 
 ## What these tools do
 
-All tools operate on the **folder where the executable (or script) lives**. They **list**, **rename**, and **write text reports** on disk. They do **not** connect to the internet, cloud APIs, or remote services—the Python sources in this repository use only the standard library plus local file and Windows path APIs (see [Security and audit](#security-and-audit) below).
+All tools operate on the **folder where the executable (or script) lives** when launched with a double-click (or with no file arguments). They **list**, **rename**, and **write text reports** on disk. They do **not** connect to the internet, cloud APIs, or remote services—the Python sources in this repository use only the standard library plus local file and Windows path APIs (see [Security and audit](#security-and-audit) below).
+
+**Drag and drop:** drop one or more files onto **FName**, **FList**, or **FileRenamerPro** to process **only those files**. The report is written beside the dropped files. Launching the exe in a folder with no drops still processes every eligible document in that folder. (**FUndo** is unchanged — it still works from rename reports in the folder.)
 
 ### Naming model (summary)
 
@@ -31,8 +33,8 @@ Short names keep command lines and paths manageable under Windows **MAX_PATH** l
 |------------|---------------|---------|--------------|
 | **FName.exe** | `rename_files_inplace.py` | Rename files in place to doc ref (or legacy cleanup if parsing does not yield a 7-block ref). | **`FNameReport.txt`**; if that name exists, **`FNameReport-1.txt`**, **`-2.txt`**, … |
 | **FList.exe** | `list_files.py` | List files in the folder; parse stems into doc ref / title / notes (no renames). | **`filelist.txt`** with the same **`-1`**, **`-2`**, … scheme if needed |
-| **FNamePro.exe** | `docref_rename_list.py` | Same parsing as FList, plus **renames** to doc-ref-only names; includes path-length diagnostics in the report. | **`report.txt`** with the same **`-1`**, **`-2`**, … scheme if needed |
-| **FUndo.exe** | `undo_renames_from_reports.py` | **Undoes** successful renames from **FName** / **FNamePro** by reading every **`FNameReport*.txt`** and **`report*.txt`** in the folder (oldest → newest by file time), merging history so **later reports win** if the same target name appears more than once; then renames files back. No new report file. Optional: `python undo_renames_from_reports.py --dry-run`. |
+| **FileRenamerPro.exe** | `docref_rename_list.py` | Same parsing as FList, plus **renames** to doc-ref-only names; includes path-length diagnostics in the report. | **`report.txt`** with the same **`-1`**, **`-2`**, … scheme if needed |
+| **FUndo.exe** | `undo_renames_from_reports.py` | **Undoes** successful renames from **FName** / **FileRenamerPro** by reading every **`FNameReport*.txt`** and **`report*.txt`** in the folder (oldest → newest by file time), merging history so **later reports win** if the same target name appears more than once; then renames files back. No new report file. Optional: `python undo_renames_from_reports.py --dry-run`. |
 
 Optional configuration: place **`docref_whitelist.json`** next to the exe (or script). Use **`docref_whitelist.example.json`** as a template; patterns use fnmatch (`*` allows all for a block).
 
@@ -79,7 +81,7 @@ This section is intended for **internal review** or **IT/security** questions ab
 ### Source of truth
 
 - The **canonical behavior** is the **Python source** in this repository. The `.exe` files are **frozen bundles** of that source (plus the Python runtime) produced by **PyInstaller**.
-- **Mapping for verification:** each executable is built from exactly one entry script, as shown in the table above. **FName**, **FList**, and **FNamePro** import **`docref_core.py`** and **`win_longpath.py`**. **FUndo** imports **`win_longpath.py`** only (no `docref_core`).
+- **Mapping for verification:** each executable is built from exactly one entry script, as shown in the table above. **FName**, **FList**, and **FileRenamerPro** import **`docref_core.py`** and **`win_longpath.py`**. **FUndo** imports **`win_longpath.py`** only (no `docref_core`).
 
 ### Network and data handling
 

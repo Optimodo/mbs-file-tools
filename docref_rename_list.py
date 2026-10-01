@@ -26,6 +26,7 @@ from win_longpath import (
     path_isfile,
     path_length_report_lines,
     rename_file,
+    resolve_cli_file_targets,
     warn_if_component_too_long,
 )
 
@@ -74,7 +75,11 @@ def collect_unique_stems_in_order(filenames: list[str]) -> list[str]:
     return out
 
 
-def run(target_folder: str | None = None) -> str | None:
+def run(
+    target_folder: str | None = None,
+    filenames: list[str] | None = None,
+    selection_notes: list[str] | None = None,
+) -> str | None:
     if target_folder is None:
         target_folder = get_base_path()
     else:
@@ -84,12 +89,20 @@ def run(target_folder: str | None = None) -> str | None:
     report_path = next_available_report_path(target_folder, REPORT_NAME)
 
     try:
-        all_names = [
-            f
-            for f in list_directory(target_folder)
-            if path_isfile(os.path.join(target_folder, f))
-            and not should_skip_processing(f, script_basename)
-        ]
+        if filenames is not None:
+            all_names = []
+            for f in filenames:
+                if should_skip_processing(f, script_basename):
+                    continue
+                if path_isfile(os.path.join(target_folder, f)):
+                    all_names.append(f)
+        else:
+            all_names = [
+                f
+                for f in list_directory(target_folder)
+                if path_isfile(os.path.join(target_folder, f))
+                and not should_skip_processing(f, script_basename)
+            ]
     except OSError as e:
         print(f"Cannot list folder: {e}")
         return None
@@ -98,12 +111,20 @@ def run(target_folder: str | None = None) -> str | None:
     lines: list[str] = []
 
     lines.append("=" * 70)
-    lines.append("DOC REF RENAME + LIST REPORT (FNamePro)")
+    lines.append("DOC REF RENAME + LIST REPORT (FileRenamerPro)")
     lines.append("=" * 70)
     lines.append(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     lines.append(f"Folder: {target_folder}")
+    if filenames is not None:
+        lines.append(f"Mode: selected files only ({len(all_names)} file(s) from drag-drop / CLI)")
+    else:
+        lines.append("Mode: all eligible files in folder")
     lines.append("=" * 70)
     lines.append("")
+    if selection_notes:
+        lines.append("=== Selection notes ===")
+        lines.extend(selection_notes)
+        lines.append("")
     lines.append("=== Path length diagnostics ===")
     lines.extend(path_length_report_lines(target_folder, all_names))
     lines.append("")
@@ -259,4 +280,14 @@ def run(target_folder: str | None = None) -> str | None:
 
 
 if __name__ == "__main__":
-    run()
+    folder, selected, sel_notes = resolve_cli_file_targets()
+    for note in sel_notes:
+        print(f"ℹ️  {note}")
+    if selected is not None:
+        print(f"Processing {len(selected)} selected file(s)…")
+        run(target_folder=folder, filenames=selected, selection_notes=sel_notes)
+    else:
+        run(selection_notes=sel_notes)
+    if getattr(sys, "frozen", False):
+        print()
+        input("Press Enter to exit...")

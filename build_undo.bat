@@ -1,5 +1,5 @@
 @echo off
-REM Build FUndo.exe (undo renames from FName / FNamePro reports)
+REM Build FUndo.exe (undo renames from FName / FileRenamerPro reports)
 echo ============================================
 echo Building FUndo.exe
 echo ============================================

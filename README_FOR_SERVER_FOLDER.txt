@@ -2,7 +2,7 @@
   MBS FILE TOOLS (Windows programs)
 ================================================================================
 
-If you found this note next to some small programs (FName, FList, FNamePro,
+If you found this note next to some small programs (FName, FList, FileRenamerPro,
 FUndo), here is what they are for, in plain language.
 
 These tools are for people who work with engineering drawing files (for example
@@ -34,12 +34,12 @@ help pull out or standardise the reference part so names match our filing rules.
     the files in this folder in a way that is easy to copy into a spreadsheet
     or email.
 
-  FNamePro
+  FileRenamerPro
     Like FList, but it also renames files to the standard document reference
     where it can. It writes a text report (report.txt) with more detail.
 
   FUndo
-    Tries to put file names back how they were before FName or FNamePro was
+    Tries to put file names back how they were before FName or FileRenamerPro was
     run. It reads the text reports those programs left in the same folder
     (including older copies named with -1, -2, and so on). You normally do
     not need it unless something went wrong or you change your mind.
