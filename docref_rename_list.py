@@ -288,6 +288,3 @@ if __name__ == "__main__":
         run(target_folder=folder, filenames=selected, selection_notes=sel_notes)
     else:
         run(selection_notes=sel_notes)
-    if getattr(sys, "frozen", False):
-        print()
-        input("Press Enter to exit...")
